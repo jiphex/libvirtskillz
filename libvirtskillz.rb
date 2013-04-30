@@ -9,7 +9,6 @@
 # end
 
 require 'libvirt'
-require 'builder'
 require 'nokogiri'
 
 class Libvirt::Connect
@@ -22,14 +21,8 @@ class Libvirt::Connect
 end
 
 class Libvirt::Domain
-  def create_snapshot(sdesc=nil)
-  	builder = Builder::XmlMarkup.new
-  	snapshot_xml = builder.domainsnapshot do |ds|
-  	  if sdesc
-  	  	ds.description(sdesc)
-	  end
-	end
-	snap = self.snapshot_create_xml(snapshot_xml)
+  def create_snapshot
+	snap = self.snapshot_create_xml("<domainsnapshot/>")
 	if block_given?
 	  yield snap
 	  snap.delete

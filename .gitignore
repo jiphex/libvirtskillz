@@ -1,1 +1,2 @@
-ruby-libvirt-skillz_0.1_amd64.deb
+*.deb
+*.rpm

@@ -16,6 +16,10 @@ Makes the following possible:
       end
     end
 
-Use fpm to create a debian package with `make'.
+Use fpm to create debian or CentOS packages with `make'. You need rubygems
+for fpm, but not to use the final package.
+
+On CentOS, you'll need the EPEL repo to install the final package, and
+rpmbuild to be able to create the RPMs with FPM.
 
 

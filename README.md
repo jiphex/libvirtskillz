@@ -13,6 +13,7 @@ Makes the following possible:
 
         # Takes a backup of a snapshot of every disk of this domain
         s.qemu_img_backup_commands("/var/backups/").each do{|s|system s}
+        # Backups will be (e.g) /var/backups/webvm-hda.qcow
       end
     end
 

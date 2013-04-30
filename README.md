@@ -16,4 +16,6 @@ Makes the following possible:
       end
     end
 
+Use fpm to create a debian package with `make'.
+
 

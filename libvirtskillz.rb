@@ -30,6 +30,36 @@ class Libvirt::Domain
 	  return snap
 	end
   end
+
+  def create_lvm_snapshot
+        disks.each do |tgt,vol|
+          snap_name = "#{name}-#{tgt}-snap-#{Time.now.to_i}"
+	  puts "lvcreate -n #{snap_name} -s #{vol} -L2G"
+          if(system("lvcreate -n #{snap_name} -s #{vol} -L2G"))
+	    return File.join(File.dirname(vol),snap_name)
+          else
+            return false
+          end
+        end
+  end
+
+  def disks
+  	bs = {}
+	noko_details.xpath('/domain/devices/disk').map do |ddsk|
+	  next if ddsk.xpath('@device').text != "disk"
+	  next if ddsk.xpath('@snapshot').text == "external"
+	  sf = ddsk.xpath('source/@dev','source/@file').text
+	  td = ddsk.xpath('target/@dev').text
+	  bs[td] = sf
+	end
+	bs
+  end
+
+  private
+
+  def noko_details
+      Nokogiri::XML(self.xml_desc)
+  end
 end
 
 class Libvirt::Domain::Snapshot

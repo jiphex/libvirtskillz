@@ -13,7 +13,7 @@ require 'nokogiri'
 
 class Libvirt::Connect
   def domains
-  	if active_domains = self.list_domains.map do |a|
+  	active_domains = self.list_domains.map do |a|
   	  self.lookup_domain_by_id(a)
 	end
 	inactive_domains = self.list_defined_domains.map do |a|

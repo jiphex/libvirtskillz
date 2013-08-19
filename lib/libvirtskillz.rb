@@ -17,6 +17,11 @@ class Libvirt::Connect
   # The libvirt API only contains methods for retrieving a list of Domain
   # names or IDs. This provides Libvirt::Connect#domains which returns a list of
   # Domain objects instead.
+  #
+  # As the result is just an Array, you can use Ruby's standard Array methods to
+  # filter and modify the results, for example:
+  #
+  #  Libvirt::open.domains.find_all{|a|a.name=~/^windows/}
   def domains
   	active_domains = self.list_domains.map do |a|
   	  self.lookup_domain_by_id(a)
@@ -28,7 +33,14 @@ class Libvirt::Connect
   end
 end
 
+# Monkey patches to the Libvirt::Domain class
 class Libvirt::Domain
+
+  # Call [virDomainCurrentSnapshot][1] to create a snapshot using the Libvirt API.
+  # Please note that this will not work if the Domain uses LVM as a backing
+  # store, and you'll need to use {#create_lvm_snapshot} instead.
+  #
+  # [1]:http://www.libvirt.org/html/libvirt-libvirt.html#virDomainCurrentSnapshot
   def create_snapshot
 	snap = self.snapshot_create_xml("<domainsnapshot/>")
 	if block_given?
@@ -39,6 +51,10 @@ class Libvirt::Domain
 	end
   end
 
+
+  # Runs the commands necessary to create LVM snapshots of each of the disks of
+  # the target Domain. This should result in a snapshot per LV, each named:
+  # "srcdomname-volname-snap-timestamp".
   def create_lvm_snapshot
         disks.each do |tgt,vol|
           snap_name = "#{name}-#{tgt}-snap-#{Time.now.to_i}"
@@ -51,6 +67,9 @@ class Libvirt::Domain
         end
   end
 
+  # Enumerates the disks for this domain.
+  #
+  # Ignores disks which would not be snapshotted (snapshot=external)
   def disks
   	bs = {}
 	noko_details.xpath('/domain/devices/disk').map do |ddsk|
@@ -70,7 +89,9 @@ class Libvirt::Domain
   end
 end
 
+# Monkey patches to the Libvirt::Domain::Snapshot class
 class Libvirt::Domain::Snapshot
+
   def domain_uuid
   	noko_details.xpath("/domainsnapshot/domain/uuid").text.strip
   end
@@ -79,6 +100,7 @@ class Libvirt::Domain::Snapshot
   	noko_details.xpath("/domainsnapshot/domain/name").text.strip
   end
 
+  # Convenience method to quickly access properties of this {Snapshot}
   def method_missing(meth,*args,&block)
   	m = noko_details.xpath("/domainsnapshot/#{meth}")
   	if m.length > 0
@@ -88,6 +110,7 @@ class Libvirt::Domain::Snapshot
 	end
   end
 
+  # Returns the underlying block device for this snapshot.
   def backing_store
   	bs = {}
 	noko_details.xpath('/domainsnapshot/domain/devices/disk').map do |ddsk|
@@ -100,6 +123,24 @@ class Libvirt::Domain::Snapshot
 	bs
   end
 
+  # Provides the qemu-img commands to export this snapshot to a different file.
+  #
+  # This assumes that you've got a VM using qcow[2] as it's disk, with a
+  # snapshot taken using the {Libvirt::Domain#create_snapshot} method which you
+  # want to extract to a new file.
+  #
+  # Doesn't actually runs the commands, it's assumed you'll do something like
+  # this:
+  #
+  #   Libvirt::open.domains.first do |dom|
+  #     dom.create_snapshot do |snap|
+  #       snap.qemu_img_backing_command("/var/tmp").each{|s|system s}
+  #     end
+  #   end
+  #
+  # @param opath [String] the directory intended to store the resulting files
+  # @param cmd [String] the path/command to qemu-img
+  # @param compressed [Boolean] whether to specify the qemu-img "compressed" flag
   def qemu_img_export_commands(opath,cmd='qemu-img',compressed=true)
   	unless File.directory?(opath)
   	  puts "Not a directory: #{opath}"

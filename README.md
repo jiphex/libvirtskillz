@@ -12,7 +12,7 @@ Makes the following possible:
         puts s.backing_store # details about each disk and where it's stored
 
         # Takes a backup of a snapshot of every disk of this domain
-        s.qemu_img_backup_commands("/var/backups/").each do{|s|system s}
+        s.qemu_img_backup_commands("/var/backups/").each{|s|system s}
         # Backups will be (e.g) /var/backups/webvm-hda.qcow
       end
     end

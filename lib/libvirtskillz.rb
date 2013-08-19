@@ -11,7 +11,12 @@
 require 'libvirt'
 require 'nokogiri'
 
+# Monkey patches to the Libvirt::Connect class
 class Libvirt::Connect
+
+  # The libvirt API only contains methods for retrieving a list of Domain
+  # names or IDs. This provides Libvirt::Connect#domains which returns a list of
+  # Domain objects instead.
   def domains
   	active_domains = self.list_domains.map do |a|
   	  self.lookup_domain_by_id(a)

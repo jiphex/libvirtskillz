@@ -1,2 +1,4 @@
 *.deb
 *.rpm
+.yardoc/
+doc/

@@ -134,7 +134,7 @@ class Libvirt::Domain::Snapshot
   #
   #   Libvirt::open.domains.first do |dom|
   #     dom.create_snapshot do |snap|
-  #       snap.qemu_img_backing_command("/var/tmp").each{|s|system s}
+  #       snap.qemu_img_export_command("/var/tmp").each{|s|system s}
   #     end
   #   end
   #

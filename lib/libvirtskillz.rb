@@ -36,6 +36,27 @@ end
 # Monkey patches to the Libvirt::Domain class
 class Libvirt::Domain
 
+  states = {
+      Libvirt::Domain::NOSTATE => ["no state"],
+      Libvirt::Domain::RUNNING => ["running"],
+      Libvirt::Domain::BLOCKED => ["blocked"],
+      Libvirt::Domain::SHUTDOWN => ["shutdown"],
+      Libvirt::Domain::SHUTOFF => ["shutoff", {
+            Libvirt::Domain::DOMAIN_SHUTOFF_CRASHED => "Crashed",
+            Libvirt::Domain::DOMAIN_SHUTOFF_DESTROYED => "Destroyed",
+            Libvirt::Domain::DOMAIN_SHUTOFF_FAILED => "Failed",
+            Libvirt::Domain::DOMAIN_SHUTOFF_FROM_SNAPSHOT => "From snapshot",
+            Libvirt::Domain::DOMAIN_SHUTOFF_MIGRATED => "Migrated",
+            Libvirt::Domain::DOMAIN_SHUTOFF_SAVED => "Saved",
+            Libvirt::Domain::DOMAIN_SHUTOFF_SHUTDOWN => "Shutdown",
+            Libvirt::Domain::DOMAIN_SHUTOFF_UNKNOWN => "Unknown",
+      }],
+      Libvirt::Domain::CRASHED => ["crashed"],
+      #Libvirt::Domain::PMSUSPENDED => ["pmsuspended"],
+      #Libvirt::Domain::LAST => ["last"]
+  }
+
+
   # Call [virDomainCurrentSnapshot][1] to create a snapshot using the Libvirt API.
   # Please note that this will not work if the Domain uses LVM as a backing
   # store, and you'll need to use {#create_lvm_snapshot} instead.

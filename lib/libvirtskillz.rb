@@ -75,17 +75,18 @@ class Libvirt::Domain
 
   # Runs the commands necessary to create LVM snapshots of each of the disks of
   # the target Domain. This should result in a snapshot per LV, each named:
-  # "srcdomname-volname-snap-timestamp".
+  # "srcdomname-volname-snap-timestamp". Returns a hash e.g {"vdb"=>"/dev/mapper..snap"}
   def create_lvm_snapshot
-        disks.each do |tgt,vol|
-          snap_name = "#{name}-#{tgt}-snap-#{Time.now.to_i}"
-	  puts "lvcreate -n #{snap_name} -s #{vol} -L2G"
-          if(system("lvcreate -n #{snap_name} -s #{vol} -L2G"))
-	    return File.join(File.dirname(vol),snap_name)
-          else
-            return false
-          end
-        end
+    tsnap = disks.map do |tgt,vol|
+      snap_name = "#{name}-#{tgt}-snap-#{Time.now.to_i}"
+      puts "lvcreate -n #{snap_name} -s #{vol} -L2G"
+      if(system("lvcreate -n #{snap_name} -s #{vol} -L2G"))
+        [tgt,File.join(File.dirname(vol),snap_name)]
+      else
+        nil
+      end
+    end.reject{|a|a.nil?}
+    return Hash[tsnap]
   end
 
   # Enumerates the disks for this domain.
